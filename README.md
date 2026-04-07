@@ -41,10 +41,13 @@ brew install ffmpeg
 ```bash
 video_converter/
 ├── assets/
-│   └── .gitignore
+│   ├── .gitignore
+│   ├── <video_files>
 ├── README.md
 └── video_converter.py
 ```
+
+The `assets/` folder can be used for sample inputs and converted outputs.
 
 ## Usage
 
