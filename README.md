@@ -40,6 +40,8 @@ brew install ffmpeg
 
 ```bash
 video_converter/
+├── assets/
+│   └── .gitignore
 ├── README.md
 └── video_converter.py
 ```
