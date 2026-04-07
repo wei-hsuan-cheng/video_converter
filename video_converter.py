@@ -102,6 +102,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional output FPS override.",
     )
     parser.add_argument(
+        "--even-dimensions",
+        choices=("pad", "scale", "none"),
+        default="pad",
+        help=(
+            "How to handle odd video dimensions when re-encoding. "
+            "Default: pad"
+        ),
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Overwrite existing output files.",
@@ -188,30 +197,56 @@ def build_ffmpeg_command(
     output_path: Path,
     args: argparse.Namespace,
 ) -> list[str]:
+    if args.video_codec.lower() == "copy":
+        if args.fps is not None:
+            raise ValueError("--fps cannot be used with --video-codec copy.")
+        if args.even_dimensions != "none":
+            raise ValueError(
+                "--even-dimensions requires video re-encoding. "
+                "Use --video-codec copy only with --even-dimensions none."
+            )
+
     command = [
         ffmpeg,
         "-hide_banner",
         "-loglevel",
         "error",
-        "-y" if args.overwrite else "-n",
+        "-y",
         "-i",
         str(input_path),
         "-map",
         "0:v:0",
         "-map",
         "0:a?",
-        "-c:v",
-        args.video_codec,
-        "-preset",
-        args.preset,
-        "-crf",
-        str(args.crf),
-        "-pix_fmt",
-        "yuv420p",
     ]
 
-    if args.fps is not None:
-        command.extend(["-r", str(args.fps)])
+    if args.video_codec.lower() == "copy":
+        command.extend(["-c:v", "copy"])
+    else:
+        command.extend(
+            [
+                "-c:v",
+                args.video_codec,
+                "-preset",
+                args.preset,
+                "-crf",
+                str(args.crf),
+                "-pix_fmt",
+                "yuv420p",
+            ]
+        )
+
+        video_filters: list[str] = []
+        if args.even_dimensions == "pad":
+            video_filters.append("pad=ceil(iw/2)*2:ceil(ih/2)*2")
+        elif args.even_dimensions == "scale":
+            video_filters.append("scale=trunc(iw/2)*2:trunc(ih/2)*2")
+
+        if video_filters:
+            command.extend(["-vf", ",".join(video_filters)])
+
+        if args.fps is not None:
+            command.extend(["-r", str(args.fps)])
 
     if args.audio_codec.lower() == "copy":
         command.extend(["-c:a", "copy"])
@@ -232,7 +267,22 @@ def convert_one(
     args: argparse.Namespace,
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    command = build_ffmpeg_command(ffmpeg, input_path, output_path, args)
+    if output_path.exists():
+        if output_path.stat().st_size == 0:
+            output_path.unlink()
+        elif not args.overwrite:
+            raise FileExistsError(
+                f"Output already exists: {output_path}. "
+                "Use --overwrite to replace it."
+            )
+
+    temp_output_path = output_path.with_name(
+        f".{output_path.stem}.tmp{output_path.suffix}"
+    )
+    if temp_output_path.exists():
+        temp_output_path.unlink()
+
+    command = build_ffmpeg_command(ffmpeg, input_path, temp_output_path, args)
 
     if args.verbose or args.dry_run:
         print(" ".join(command))
@@ -242,7 +292,10 @@ def convert_one(
 
     try:
         subprocess.run(command, check=True)
+        temp_output_path.replace(output_path)
     except subprocess.CalledProcessError as exc:
+        if temp_output_path.exists():
+            temp_output_path.unlink()
         raise RuntimeError(f"ffmpeg failed for {input_path}") from exc
 
 

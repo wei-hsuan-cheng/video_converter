@@ -65,6 +65,7 @@ Default behavior:
 - output file is written next to the input
 - video codec is `libx264`
 - audio codec is `aac`
+- odd video dimensions are padded to even dimensions by default for encoder compatibility
 
 ## Examples
 
@@ -154,6 +155,7 @@ Main options:
 - `--preset`: ffmpeg preset, default `medium`
 - `--crf`: video quality, default `23`
 - `--fps`: force output FPS
+- `--even-dimensions {pad,scale,none}`: how to handle odd frame sizes, default `pad`
 - `--overwrite`: overwrite existing files
 - `--dry-run`: print commands only
 - `--verbose`: print full ffmpeg command
@@ -163,6 +165,7 @@ Main options:
 - No third-party Python modules are used.
 - If `ffmpeg` is missing, the script exits with a clear error.
 - If the output path would overwrite the input path, the script writes `<name>_converted.<ext>` instead.
+- The converter writes to a temporary file first, then renames it on success so failed runs do not leave a broken output behind.
 - For MP4 output, `+faststart` is enabled so files are more stream-friendly.
 
 ## Contact
