@@ -2,7 +2,7 @@
 
 Simple command-line video conversion with `ffmpeg`.
 
-This repo provides a single Python script, [video_converter.py](./video_converter.py), for converting common input video formats to `mp4` or `mov`.
+This repo provides a single Python script, [`video_converter.py`](./video_converter.py), for converting common input video formats to `mp4` or `mov`.
 
 It is intended to be lightweight:
 - Python standard library only
