@@ -54,13 +54,13 @@ The `assets/` folder can be used for sample inputs and converted outputs.
 Run the script directly:
 
 ```bash
-python3 video_converter.py INPUT
+python3 video_converter.py ./assets/INPUT
 ```
 
 Or:
 
 ```bash
-./video_converter.py INPUT
+./video_converter.py ./assets/INPUT
 ```
 
 Default behavior:
@@ -75,55 +75,65 @@ Default behavior:
 Convert a single WebM to MP4:
 
 ```bash
-python3 video_converter.py demo.webm
+python3 video_converter.py ./assets/input.webm
 ```
 
 Convert a single file to MOV:
 
 ```bash
-python3 video_converter.py demo.webm --to mov
+python3 video_converter.py ./assets/input.webm --to mov
 ```
 
 Convert multiple files into a target directory:
 
 ```bash
-python3 video_converter.py a.webm b.mkv c.mov --out-dir converted
+python3 video_converter.py \
+  ./assets/input_1.webm \
+  ./assets/input_2.mkv \
+  ./assets/input_3.mov \
+  --out-dir ./assets/converted
 ```
 
 Convert every supported video inside a directory:
 
 ```bash
-python3 video_converter.py recordings --recursive --out-dir converted
+python3 video_converter.py ./assets --recursive --out-dir ./assets/converted
 ```
 
 Write to a specific output file:
 
 ```bash
-python3 video_converter.py input.webm --output final_clip.mp4
+python3 video_converter.py \
+  ./assets/input.webm \
+  --output ./assets/final_clip.mp4
 ```
 
 Preview the generated `ffmpeg` command without running it:
 
 ```bash
-python3 video_converter.py input.webm --dry-run --verbose
+python3 video_converter.py ./assets/input.webm --dry-run --verbose
 ```
 
 Overwrite existing output files:
 
 ```bash
-python3 video_converter.py input.webm --overwrite
+python3 video_converter.py ./assets/input.webm --overwrite
 ```
 
 Change encoding settings:
 
 ```bash
-python3 video_converter.py input.webm --crf 18 --preset slow --audio-bitrate 256k
+python3 video_converter.py \
+  ./assets/input.webm \
+  --crf 18 \
+  --preset slow \
+  --audio-bitrate 256k
 ```
 
 Keep the original audio stream when possible:
 
 ```bash
-python3 video_converter.py input.webm --audio-codec copy
+python3 video_converter.py ./assets/input.webm --audio-codec copy
 ```
 
 ## Supported Input Formats
