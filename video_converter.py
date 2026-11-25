@@ -6,6 +6,7 @@ Examples:
   python3 video_converter.py clip.webm --to mov
   python3 video_converter.py a.webm b.mkv --out-dir converted
   python3 video_converter.py recordings --recursive --to mp4
+  python3 video_converter.py clip.webm --fps 60
 """
 
 from __future__ import annotations
@@ -100,6 +101,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--fps",
         type=float,
         help="Optional output FPS override.",
+    )
+    parser.add_argument(
+        "--keep-frame-rate",
+        dest="constant_frame_rate",
+        action="store_false",
+        help=(
+            "Keep the source frame rate (possibly variable) instead of the default constant "
+            "--fps (30), and pass --video-codec through as given. The default (constant frame "
+            "rate, H.264 High, avc1 tag) plays everywhere, iPhone Photos included."
+        ),
     )
     parser.add_argument(
         "--even-dimensions",
@@ -197,6 +208,12 @@ def build_ffmpeg_command(
     output_path: Path,
     args: argparse.Namespace,
 ) -> list[str]:
+    if args.constant_frame_rate:
+        if args.video_codec.lower() not in {"libx264", "h264"}:
+            raise ValueError("The default re-encodes to H.264: add --keep-frame-rate for another --video-codec.")
+        if args.fps is None:
+            args.fps = 30.0
+
     if args.video_codec.lower() == "copy":
         if args.fps is not None:
             raise ValueError("--fps cannot be used with --video-codec copy.")
@@ -242,11 +259,17 @@ def build_ffmpeg_command(
         elif args.even_dimensions == "scale":
             video_filters.append("scale=trunc(iw/2)*2:trunc(ih/2)*2")
 
+        if args.constant_frame_rate:
+            # Screen recordings have a variable frame rate (WebM timebase 1/1000), which makes x264 pick
+            # an H.264 level (6.1) that many players refuse (iPhone Photos does); the fps filter resamples
+            # to a constant rate.
+            video_filters.insert(0, f"fps={args.fps:g}")
+            command.extend(["-profile:v", "high", "-tag:v", "avc1"])
+        elif args.fps is not None:
+            command.extend(["-r", str(args.fps)])
+
         if video_filters:
             command.extend(["-vf", ",".join(video_filters)])
-
-        if args.fps is not None:
-            command.extend(["-r", str(args.fps)])
 
     if args.audio_codec.lower() == "copy":
         command.extend(["-c:a", "copy"])

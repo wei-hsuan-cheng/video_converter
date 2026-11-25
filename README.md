@@ -69,6 +69,10 @@ Default behavior:
 - video codec is `libx264`
 - audio codec is `aac`
 - odd video dimensions are padded to even dimensions by default for encoder compatibility
+- constant frame rate (`--fps`, default 30), H.264 High, `avc1` tag: the widely compatible format (phones, iPhone
+  Photos included, browsers, editors).
+  Screen and browser recordings have a variable frame rate, which otherwise gives an H.264 level some players reject.
+  `--fps 60` for 60 fps; `--keep-frame-rate` keeps the source rate
 
 ## Examples
 
@@ -130,6 +134,12 @@ python3 video_converter.py \
   --audio-bitrate 256k
 ```
 
+Keep the source frame rate instead of the default constant 30 fps (see Default behavior):
+
+```bash
+python3 video_converter.py ./assets/input.webm --keep-frame-rate
+```
+
 Keep the original audio stream when possible:
 
 ```bash
@@ -167,7 +177,8 @@ Main options:
 - `--audio-bitrate`: audio bitrate when re-encoding, default `192k`
 - `--preset`: ffmpeg preset, default `medium`
 - `--crf`: video quality, default `23`
-- `--fps`: force output FPS
+- `--fps`: output FPS (default 30 unless `--keep-frame-rate`)
+- `--keep-frame-rate`: keep the source (possibly variable) frame rate
 - `--even-dimensions {pad,scale,none}`: how to handle odd frame sizes, default `pad`
 - `--overwrite`: overwrite existing files
 - `--dry-run`: print commands only
